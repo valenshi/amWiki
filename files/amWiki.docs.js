@@ -285,20 +285,20 @@
         });
     };
 
-    /**
-     * 解析 markdown 复选框
-     * @param {String} html
-     * @returns {String}
-     * @private
-     */
-    Docs.prototype._setCheckbox = function (html) {
-        return html.replace(/\[([√×Xx\s\-_])\]\s(.*?)([<\n\r])/g, function (m, s1, s2, s3, index) {
-            var checkboxHtml = '<input type="checkbox" id="checkbox' + index + '"';
-            checkboxHtml += /\s/.test(s1) ? '>' : 'checked="true">';
-            checkboxHtml += '<label for="checkbox' + index + '">' + s2 + '</label>';
-            return checkboxHtml + s3;
-        });
-    };
+    // /**
+    //  * 解析 markdown 复选框
+    //  * @param {String} html
+    //  * @returns {String}
+    //  * @private
+    //  */
+    // Docs.prototype._setCheckbox = function (html) {
+    //     return html.replace(/\[([√×Xx\s\-_])\]\s(.*?)([<\n\r])/g, function (m, s1, s2, s3, index) {
+    //         var checkboxHtml = '<input type="checkbox" id="checkbox' + index + '"';
+    //         checkboxHtml += /\s/.test(s1) ? '>' : 'checked="true">';
+    //         checkboxHtml += '<label for="checkbox' + index + '">' + s2 + '</label>';
+    //         return checkboxHtml + s3;
+    //     });
+    // };
 
     /**
      * 解析 markdown 文字飘红
