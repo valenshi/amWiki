@@ -284,7 +284,21 @@
             return imgHtml;
         });
     };
-
+    /**
+     * 解析 Markdown 中的 LaTeX 公式
+     * @param {String} html
+     * @returns {String}
+     * @private
+     */
+    Docs.prototype._parseLatexEquations = function (html) {
+        // 正则表达式匹配 LaTeX 公式块
+        var latexRegex = /\$\$([\s\S]*?)\$\$|\\\[([\s\S]*?)\\\]|\\\(([\s\S]*?)\\\)/g;
+        html = html.replace(latexRegex, function (match, p1, p2, p3) {
+            var latexCode = p1 || p2 || p3;
+            return '<span class="latex-equation">' + katex.renderToString(latexCode) + '</span>';
+        });
+        return html;
+    };
     /**
      * 解析 markdown 复选框
      * @param {String} html
@@ -431,6 +445,8 @@
         html = this._setTOC(html);
         //自定义图片大小与对齐方式
         html = this._setImgResize(html);
+        // latex公式解析
+        html = this._parseLatexEquations(html);
         //复选框
         html = this._setCheckbox(html);
         //文字飘红
