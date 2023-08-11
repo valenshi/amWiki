@@ -32,6 +32,39 @@
         };
         this._initUrlEncode();
         this._initHashEvent();
+        this._initLatexEquations();
+    };
+    /**
+     * 初始化 LaTeX 公式解析
+     * @private
+     */
+    Docs.prototype._initLatexEquations = function () {
+        // 引入 KaTeX 样式表
+        var katexStylesheet = document.createElement('link');
+        katexStylesheet.rel = 'stylesheet';
+        katexStylesheet.href = 'https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css';
+        document.head.appendChild(katexStylesheet);
+
+        // 引入 KaTeX 脚本
+        var katexScript = document.createElement('script');
+        katexScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.js';
+        document.head.appendChild(katexScript);
+
+        // 引入 KaTeX Auto-render 脚本
+        var katexAutoRenderScript = document.createElement('script');
+        katexAutoRenderScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/contrib/auto-render.min.js';
+        document.head.appendChild(katexAutoRenderScript);
+
+        // 设置 KaTeX Auto-render 的渲染选项
+        katexAutoRenderScript.onload = function () {
+            renderMathInElement(document.body, {
+                delimiters: [
+                    { left: '$$', right: '$$', display: true },
+                    { left: '\\[', right: '\\]', display: true },
+                    { left: '\\(', right: '\\)', display: false }
+                ]
+            });
+        };
     };
 
     /**
