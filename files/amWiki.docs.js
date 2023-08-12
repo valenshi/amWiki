@@ -326,24 +326,31 @@
      * @returns {String}
      * @private
      */
-    Docs.prototype._parseLatexEquations = function (html) {
+    Docs.prototype._parseLatexEquations = function (text) {
         var that = this;
     
         // 如果 KaTeX 库还没有加载完成，等待 100ms 后再次尝试解析 LaTeX 公式
         if (!that.katexLoaded) {
             setTimeout(function () {
-                html = that._parseLatexEquations(html);
+                text = that._parseLatexEquations(text);
             }, 100);
-            return html;
+            return text;
+        }
+    
+        // 将 HTML 实体转换回原始字符
+        function decodeHtmlEntities(str) {
+            var textarea = document.createElement("textarea");
+            textarea.innerHTML = str;
+            return textarea.value;
         }
     
         // 正则表达式匹配 LaTeX 公式块
-        var latexRegex = /\$\$([\s\S]*?)\$\$|\\\[([\s\S]*?)\\\]|\\\(([\s\S]*?)\\\)/g;
-        html = html.replace(latexRegex, function (match, p1, p2, p3) {
-            var latexCode = p1 || p2 || p3;
-            return '<span class="latex-equation">' + katex.renderToString(latexCode) + '</span>';
+        var latexRegex = /\$\$([\s\S]*?)\$\$|\\\[([\s\S]*?)\\\]|\\\(([\s\S]*?)\\\)|(?<!\\)\$([^\$]+?)(?<!\\)\$/g;
+        text = text.replace(latexRegex, function (match, p1, p2, p3, p4) {
+            var latexCode = decodeHtmlEntities(p1 || p2 || p3 || p4);
+            return '`katex:' + encodeURIComponent(latexCode) + '`';
         });
-        return html;
+        return text;
     };
     /**
      * 解析 markdown 复选框
@@ -479,51 +486,57 @@
         var that = this;
         var html = '';
         this.cleanView();
-        //增加"\"符转义功能
+        // 增加"\"符转义功能
         content = content.replace(/\\(.)/g, function (m, s1) {
             return '&#' + s1.charCodeAt(0) + ';';
         });
-        //创建脚注
+        // 创建脚注
         content = this._setFootnote(content);
-        //编译 markdown
+        // 解析 LaTeX 公式
+        content = this._parseLatexEquations(content);
+        // 编译 markdown
         html = marked(content);
-        //创建目录标记，和悬浮窗格式统一
+        // 将占位符替换回解析后的 LaTeX 公式
+        html = html.replace(/`katex:([^`]+)`/g, function (match, p1) {
+            var latexCode = decodeURIComponent(p1);
+            return '<span class="latex-equation">' + katex.renderToString(latexCode) + '</span>';
+        });
+    
+        // 创建目录标记，和悬浮窗格式统一
         html = this._setTOC(html);
-        //自定义图片大小与对齐方式
+        // 自定义图片大小与对齐方式
         html = this._setImgResize(html);
-        // latex公式解析
-        html = this._parseLatexEquations(html);
-        //复选框
+        // 复选框
         html = this._setCheckbox(html);
-        //文字飘红
+        // 文字飘红
         html = this._setRedText(html);
-        //填充到页面
+        // 填充到页面
         this.$e.view.html(html);
-        //功能化代码块
+        // 功能化代码块
         this.$e.view.find('pre code').each(function (i, element) {
             var $elm = $(element);
             var className = $elm.attr('class') || '';
-            //创建流程图
+            // 创建流程图
             if (className.indexOf('lang-flow') >= 0) {
                 that._createFlowChart($elm);
             }
-            //创建语法高亮
+            // 创建语法高亮
             else if (className.indexOf('lang') >= 0) {
                 hljs.highlightBlock(element);
             }
-            //创建js注释开关
+            // 创建js注释开关
             className = $elm.attr('class') || '';
             if (className.indexOf('javascript') >= 0) {
                 that._setJSCommentDisable($elm);
             }
         });
-        //设置网页title
+        // 设置网页title
         var title = this.$e.view.find('h1').eq(0).text();
         this.$e.title.text(title);
         this.$e.contentsTitle.text(title).attr('href', '#' + title.replace(/"/g, ''));
-        //创建描点
+        // 创建描点
         var contents = this._setTitlesAnchor();
-        //创建目录
+        // 创建目录
         this._createContents(contents);
     };
 
