@@ -39,32 +39,35 @@
      * @private
      */
     Docs.prototype._initLatexEquations = function () {
+        var that = this;
+    
+        // 加载 KaTeX 相关库的辅助函数
+        function loadScript(src, onload) {
+            var script = document.createElement('script');
+            script.src = src;
+            script.onload = onload;
+            document.head.appendChild(script);
+        }
+    
         // 引入 KaTeX 样式表
         var katexStylesheet = document.createElement('link');
         katexStylesheet.rel = 'stylesheet';
         katexStylesheet.href = 'https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css';
         document.head.appendChild(katexStylesheet);
-
-        // 引入 KaTeX 脚本
-        var katexScript = document.createElement('script');
-        katexScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.js';
-        document.head.appendChild(katexScript);
-
-        // 引入 KaTeX Auto-render 脚本
-        var katexAutoRenderScript = document.createElement('script');
-        katexAutoRenderScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/contrib/auto-render.min.js';
-        document.head.appendChild(katexAutoRenderScript);
-
-        // 设置 KaTeX Auto-render 的渲染选项
-        katexAutoRenderScript.onload = function () {
-            renderMathInElement(document.body, {
-                delimiters: [
-                    { left: '$$', right: '$$', display: true },
-                    { left: '\\[', right: '\\]', display: true },
-                    { left: '\\(', right: '\\)', display: false }
-                ]
+    
+        // 依次加载 KaTeX 脚本和 KaTeX Auto-render 脚本
+        loadScript('https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.js', function () {
+            that.katexLoaded = true;
+            loadScript('https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/contrib/auto-render.min.js', function () {
+                renderMathInElement(document.body, {
+                    delimiters: [
+                        { left: '$$', right: '$$', display: true },
+                        { left: '\\[', right: '\\]', display: true },
+                        { left: '\\(', right: '\\)', display: false }
+                    ]
+                });
             });
-        };
+        });
     };
 
     /**
@@ -324,6 +327,16 @@
      * @private
      */
     Docs.prototype._parseLatexEquations = function (html) {
+        var that = this;
+    
+        // 如果 KaTeX 库还没有加载完成，等待 100ms 后再次尝试解析 LaTeX 公式
+        if (!that.katexLoaded) {
+            setTimeout(function () {
+                html = that._parseLatexEquations(html);
+            }, 100);
+            return html;
+        }
+    
         // 正则表达式匹配 LaTeX 公式块
         var latexRegex = /\$\$([\s\S]*?)\$\$|\\\[([\s\S]*?)\\\]|\\\(([\s\S]*?)\\\)/g;
         html = html.replace(latexRegex, function (match, p1, p2, p3) {
